@@ -23,16 +23,33 @@ def place_order(side):
     signature = hmac.new(SECRET_KEY, params.encode(), hashlib.sha256).hexdigest()
     headers = {"X-MBX-APIKEY": API_KEY}
     full_url = f"{url}?{params}&signature={signature}"
-    
-    print(f"[DEBUG] Sending {side.upper()} order for {QTY} {SYMBOL}")
-    print(f"[DEBUG] Request URL: {full_url}")
 
+    print(f"[DEBUG] Sending {side.upper()} order for {QTY} {SYMBOL}")
     response = requests.post(full_url, headers=headers)
-    
-    print(f"[DEBUG] Binance Response Code: {response.status_code}")
-    print(f"[DEBUG] Binance Response Body: {response.text}")
-    
+    print(f"[DEBUG] Binance Response: {response.status_code} - {response.text}")
+
+    # 🧾 Log Balance
+    log_balance()
+
     return response
+
+
+def log_balance():
+    timestamp = int(time.time() * 1000)
+    params = f"timestamp={timestamp}"
+    signature = hmac.new(SECRET_KEY, params.encode(), hashlib.sha256).hexdigest()
+    url = f"{BASE_URL}/api/v3/account?{params}&signature={signature}"
+    headers = {"X-MBX-APIKEY": API_KEY}
+    response = requests.get(url, headers=headers).json()
+
+    print("=== Binance Testnet Balance ===")
+    for asset in response["balances"]:
+        free = float(asset["free"])
+        locked = float(asset["locked"])
+        if free > 0 or locked > 0:
+            print(f"{asset['asset']}: Free={free} | Locked={locked}")
+
+
 
 @app.route("/", methods=["POST"])
 def webhook():
