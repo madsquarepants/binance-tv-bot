@@ -23,14 +23,26 @@ def place_order(side):
     signature = hmac.new(SECRET_KEY, params.encode(), hashlib.sha256).hexdigest()
     headers = {"X-MBX-APIKEY": API_KEY}
     full_url = f"{url}?{params}&signature={signature}"
-    return requests.post(full_url, headers=headers)
+    
+    print(f"[DEBUG] Sending {side.upper()} order for {QTY} {SYMBOL}")
+    print(f"[DEBUG] Request URL: {full_url}")
+
+    response = requests.post(full_url, headers=headers)
+    
+    print(f"[DEBUG] Binance Response Code: {response.status_code}")
+    print(f"[DEBUG] Binance Response Body: {response.text}")
+    
+    return response
 
 @app.route("/", methods=["POST"])
 def webhook():
     data = request.get_json()
     signal = data.get("signal", "").lower()
 
+    print(f"[DEBUG] Webhook received: {data}")
+
     if signal not in ["long", "short"]:
+        print("[ERROR] Invalid signal received")
         return jsonify({"error": "Invalid signal"}), 400
 
     side = "BUY" if signal == "long" else "SELL"
